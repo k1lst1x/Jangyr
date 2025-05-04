@@ -115,6 +115,10 @@
     textarea.message-input {
         resize: none;
     }
+    .message-content {
+        font-size: 14px; /* или даже 13px */
+        line-height: 1.5;
+    }
 </style>
 {% endblock %}
 
@@ -141,7 +145,12 @@
                             </li>
                             <li class="message received">
                                 <div class="message-sender">JangyrAI-бот</div>
-                                <div class="message-content">{{ chat.response|safe }}</div>
+                                <div class="message-content" id="response-{{ chat.id }}">
+                                    {{ chat.response|safe }}
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary download-pdf mt-2" data-id="{{ chat.id }}">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Скачать PDF
+                                </button>
                             </li>
                         {% endif %}
                     {% endfor %}
@@ -368,6 +377,29 @@ document.addEventListener('DOMContentLoaded', () => {
         recordingButton.classList.remove('d-none');
         textarea.classList.remove('d-none');
         fileInfo.classList.add('d-none');
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.download-pdf').forEach(button => {
+        button.addEventListener('click', () => {
+            const id = button.getAttribute('data-id');
+            const el = document.getElementById('response-' + id);
+
+            if (!el) return;
+
+            const opt = {
+                margin:       [5, 10, 5, 10], // сверху, справа, снизу, слева
+                filename:     'JangyrAI-response.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 1.5 }, // было 2, теперь 1.5 — текст станет компактнее
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };            
+
+            html2pdf().set(opt).from(el).save();
+        });
     });
 });
 </script>

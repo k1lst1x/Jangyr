@@ -148,8 +148,9 @@
                                 <div class="message-content" id="response-{{ chat.id }}">
                                     {{ chat.response|safe }}
                                 </div>
-                                <button class="btn btn-sm btn-outline-secondary download-pdf mt-2" data-id="{{ chat.id }}">
-                                    <i class="bi bi-file-earmark-pdf-fill"></i> Скачать PDF
+                                <button class="btn btn-sm btn-outline-secondary download-pdf mt-2"
+                                        data-id="response-{{ chat.id }}">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Скачать PDF
                                 </button>
                             </li>
                         {% endif %}

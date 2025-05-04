@@ -172,7 +172,7 @@ def make_rich_summary(docs: list[Document], set_name: str, user_id: int) -> str:
 ----------------------------------------------------
 Формат ответа:
 ### Анализ
-- <аннотация 200–250 слов>
+- <имя файла без его расширения> — <аннотация 200–250 слов>
 """
     return ask_openai(prompt, user_key=f"{user_id}_{set_name}_rich")
 

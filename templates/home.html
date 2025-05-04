@@ -363,6 +363,9 @@ document.addEventListener('DOMContentLoaded', () => {
     removeFile.addEventListener('click', () => {
         fileInput.value = '';
         fileContextName = '';
+        sendFileButton.classList.add('d-none');
+        sendButton.classList.remove('d-none');
+        recordingButton.classList.remove('d-none');
         textarea.classList.remove('d-none');
         fileInfo.classList.add('d-none');
     });

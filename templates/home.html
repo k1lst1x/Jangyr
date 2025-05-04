@@ -172,7 +172,8 @@
                 </button>
                 <button
                     id="recordingButton" 
-                    class="btn btn-primary mx-2">
+                    class="btn btn-primary mx-2"
+                    type="button">
                     <i class="bi bi-mic-fill"></i>
                 </button>
                 <button
@@ -195,7 +196,6 @@
     const sendButton = document.getElementById('sendButton');
     const output = document.getElementById('output');
     const messageInput = document.querySelector('.message-input');
-    const form = document.getElementById('chat-form');
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -287,7 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         /* 3. — отправляем FormData */
-        const data = new FormData(form);       
+        const data = new FormData(form);  
+        
+        console.log('file context name - ', fileContextName)
         
         if (fileContextName) {
             const message = data.get('message');

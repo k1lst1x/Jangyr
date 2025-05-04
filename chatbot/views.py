@@ -205,6 +205,8 @@ def chatbot(request):
                 response= "⌛ Запуск ИИ…",
             )
 
+            set_name = ''
+
             # --- 2) длинные вычисления -------------------------------
             if uploaded:
                 path      = save_uploaded_file(uploaded)

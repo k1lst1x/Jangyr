@@ -1,9 +1,17 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JangyrAI - Автономный чат-бот с ИИ для анализа ВНД и НПА</title>
+  <link rel="icon" type="image/png" href="{% static 'jangyr-favicon/favicon-96x96.png' %}" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/static/jangyr-favicon/favicon.svg" />
+  <link rel="shortcut icon" href="/static/jangyr-favicon/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/static/jangyr-favicon/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-title" content="JangyrAI" />
+  <link rel="manifest" href="/static/jangyr-favicon/site.webmanifest" />
   <style>
     /* Reset and base styles */
     * {
@@ -190,7 +198,7 @@
 
     /* Components */
     header {
-      height: 4rem;
+      height: 6rem;
       display: flex;
       align-items: center;
       border-bottom: 1px solid #e2e8f0;
@@ -200,6 +208,7 @@
     nav {
       display: flex;
       gap: 1.5rem;
+      align-items: center;
     }
 
     nav a {
@@ -220,6 +229,7 @@
 
     .logo span {
       font-weight: 700;
+      font-size: 1.5rem;
     }
 
     section {
@@ -593,6 +603,16 @@
         line-height: 2rem;
       }
     }
+    /* кнопка‑лого (80‑летие) */
+    .logo-80{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:0.25rem 0.5rem;
+      transition:transform .2s;
+    }
+    .logo-80 img{height:65px;width:auto;display:block}
+    .logo-80:hover{transform:scale(1.05)}
   </style>
 </head>
 <body>
@@ -605,6 +625,11 @@
         <span>JangyrAI</span>
       </a>
       <nav class="ml-auto">
+        <a href="https://special.zakon.kz/den_pobedy" target="_blank" rel="noopener" class="logo-80" title="80‑летие Победы">
+            <img src="{% static 'images/logo80let.png' %}" alt="80 лет Победы">
+        </a>
+        <a class="text-sm font-medium" href="https://adilet.zan.kz/rus" target="_blank">ВНД</a>
+        <a class="text-sm font-medium" href="https://legalacts.egov.kz/" target="_blank">НПА</a>
         <a class="text-sm font-medium" href="#features">Возможности</a>
         <a class="text-sm font-medium" href="#how-it-works">Как это работает</a>
         <a class="text-sm font-medium" href="#contact">Контакты</a>
@@ -612,7 +637,18 @@
     </header>
 
     <main class="flex-1">
-      <section class="bg-slate-50 py-12 md:py-24 lg:py-32 xl:py-48">
+      <div class="w-full position-relative" style="padding-top: 20px; padding-bottom: 20px; background-color: #00BFFF;">
+        <div class="w-full position-relative d-flex justify-content-between align-items-center" 
+                style="background: url('{% static 'images/ornament_zoloto.png' %}') repeat-x center/contain; background-color: #00BFFF; height: 60px; overflow: visible; position: relative;">
+            
+            <!-- Слева — Орден -->
+            <div style="position: absolute; left: 360px; top: -70px; z-index: 1;">
+                <img src="{% static 'images/orden.svg' %}" alt="Орден Победы" style="height: 180px; width: auto; opacity: 0.95;">
+            </div>
+        </div>
+      </div>
+          
+      <section class="bg-slate-50 py-12 md:py-24 lg:py-32 xl:py-48" style="background-image: url('{% static 'images/symbol.png' %}'); background-position: top right; background-repeat: no-repeat;">
         <div class="container">
           <div class="grid lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
             <div class="flex flex-col justify-center space-y-4">

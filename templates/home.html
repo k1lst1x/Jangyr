@@ -248,12 +248,30 @@ document.addEventListener('DOMContentLoaded', () => {
     box.scrollTop = box.scrollHeight;
 
     /** добавляем <li> в чат */
-    function addMsg(html, cls) {
+    // ↑ внутри <script> где уже есть addMsg:
+    function addMsg(html, cls, withPdfBtn = false) {
         const li = document.createElement('li');
         li.className = `message ${cls}`;
         li.innerHTML = html;
-        list.appendChild(li);
-        document.querySelector('.messages-box').scrollTop = list.scrollHeight;
+
+        // если нужно — добавляем кнопку PDF сразу
+        if (withPdfBtn) {
+            // делаем уникальный id по времени
+            const uid = 'resp-' + Date.now();
+            const contentDiv = li.querySelector('.message-content');
+            contentDiv.id = uid;
+
+            // вставляем кнопку
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-sm btn-outline-secondary download-pdf mt-2';
+            btn.setAttribute('data-id', uid);
+            btn.innerHTML = '<i class="bi bi-file-earmark-pdf-fill"></i> Скачать PDF';
+            li.appendChild(btn);
+        }
+
+        document.querySelector('.messages-list').appendChild(li);
+        document.querySelector('.messages-box').scrollTop =
+            document.querySelector('.messages-list').scrollHeight;
     }
 
     textarea.addEventListener('input', () => {
@@ -318,7 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // выводим ответ ИИ
                 addMsg(
                     `<div class="message-sender">JangyrAI‑бот</div><div class="message-content">${response}</div>`,
-                    'received'
+                    'received',
+                    true          // ← кнопка добавится
                 );
                 if (textarea.classList.contains('d-none')) {
                     textarea.classList.remove('d-none');
@@ -382,24 +401,26 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.download-pdf').forEach(button => {
-        button.addEventListener('click', () => {
-            const id = button.getAttribute('data-id');
-            const el = document.getElementById('response-' + id);
+    const messagesBox = document.querySelector('.messages-box');
 
-            if (!el) return;
+    messagesBox.addEventListener('click', (e) => {
+        const btn = e.target.closest('.download-pdf');
+        if (!btn) return;                         // кликнули не по кнопке
+        
+        const id = btn.getAttribute('data-id');   // id контента
+        const el = document.getElementById(id);
+        if (!el) return;
 
-            const opt = {
-                margin:       [5, 10, 5, 10], // сверху, справа, снизу, слева
-                filename:     'JangyrAI-response.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 1.5 }, // было 2, теперь 1.5 — текст станет компактнее
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-            };            
+        const opt = {
+            margin:       [5, 10, 5, 10],
+            filename:     'JangyrAI-response.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 1.5 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+        };
 
-            html2pdf().set(opt).from(el).save();
-        });
+        html2pdf().set(opt).from(el).save();
     });
 });
 </script>

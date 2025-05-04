@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<style>
+    .chat-wrapper {
+        height: 85vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-box {
+        background-color: var(--card-bg);
+        border-radius: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .chat-intro {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+        color: var(--white);
+        padding: 2rem;
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+        text-align: center;
+    }
+
+    .chat-intro h5 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .chat-intro p {
+        font-size: 1rem;
+        color: #e0e7ff;
+        margin: 0;
+    }
+
+    .messages-box {
+        padding: 1rem;
+        overflow-y: auto;
+        flex-grow: 1;
+        background-color: var(--light-bg-2);
+    }
+
+    .messages-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .message {
+        max-width: 75%;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .sent {
+        align-self: flex-end;
+        background-color: var(--primary);
+        color: var(--white);
+    }
+
+    .received {
+        align-self: flex-start;
+        background-color: var(--white);
+        color: var(--text-dark);
+        border: 1px solid var(--gray-light);
+    }
+
+    .message-sender {
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .message-content {
+        word-wrap: break-word;
+    }
+
+    .message-form {
+        background-color: var(--white);
+        padding: 1rem;
+        border-top: 1px solid var(--gray-light);
+    }
+
+    .message-input {
+        border-radius: 0.5rem 0 0 0.5rem;
+    }
+
+    .btn-send {
+        border-radius: 0 0.5rem 0.5rem 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: var(--gray-light);
+        font-style: italic;
+        padding: 2rem;
+    }
+
+    .message-content em {
+        color: var(--gray);
+        font-style: italic;
+    }
+    .input-group textarea {
+        resize: none;
+    }
+    textarea.message-input {
+        resize: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container chat-wrapper mb-4">
+    <div class="chat-box">
+        <div class="chat-intro">
+            <h5><i class="icon lucide-sparkles me-1"></i> Добро пожаловать в JangyrAI</h5>
+            <p>Задайте вопрос — и позвольте ИИ помочь вам!</p>
+        </div>
+
+        <div class="messages-box">
+            <ul class="messages-list">
+                {% if chats|length == 0 %}
+                    <div class="empty-state">
+                        <p>Сообщений пока нет. Начните диалог!</p>
+                    </div>
+                {% else %}
+                    {% for chat in chats %}
+                        {% if chat.user == request.user %}
+                            <li class="message sent">
+                                <div class="message-sender">Вы</div>
+                                <div class="message-content">{{ chat.message }}</div>
+                            </li>
+                            <li class="message received">
+                                <div class="message-sender">JangyrAI-бот</div>
+                                <div class="message-content">{{ chat.response|safe }}</div>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            </ul>
+        </div>
+
+        <form id="chat-form" enctype="multipart/form-data" class="message-form">
+            {% csrf_token %}
+            <div class="input-group align-items-stretch">
+                <!-- Загрузка файла -->
+                <label for="file-upload" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Загрузить файл">
+                    <i class="bi bi-paperclip"></i>
+                </label>
+                <input id="file-upload" type="file" name="file" class="d-none">
+        
+                <!-- Текстовое поле -->
+                <textarea name="message" rows="1"
+                          class="form-control message-input"
+                          placeholder="Введите вопрос"></textarea>
+        
+                <!-- Кнопка отправки -->
+                <button type="submit" class="btn btn-primary btn-send">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+        
+            <!-- Инфо о файле и сброс -->
+            <div id="file-info" class="mt-2 d-none text-muted small">
+                <span id="file-name"></span>
+                <button type="button" id="remove-file" class="btn btn-sm btn-outline-danger ms-2">Удалить</button>
+            </div>
+        </form>                      
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const form      = document.getElementById('chat-form');
+    const textarea  = form.querySelector('.message-input');
+    const fileInput = form.querySelector('input[type="file"]');
+    const list      = document.querySelector('.messages-list');
+    const box       = document.querySelector('.messages-box');   // ← контейнер
+
+    // --- автоскролл при загрузке страницы --------------------------
+    box.scrollTop = box.scrollHeight;
+
+    /** добавляем <li> в чат */
+    function addMsg(html, cls) {
+        const li = document.createElement('li');
+        li.className = `message ${cls}`;
+        li.innerHTML = html;
+        list.appendChild(li);
+        document.querySelector('.messages-box').scrollTop = list.scrollHeight;
+    }
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+
+        const message = textarea.value.trim();
+        const hasFile = fileInput.files.length > 0;
+
+        /* 1. — карточка пользователя сразу */
+        if (message || hasFile) {
+            const userContent = message
+                ? message
+                : `<i class="icon lucide-file me-1"></i> Загрузил файл: <strong>${fileInput.files[0].name}</strong>`;
+            addMsg(
+                `<div class="message-sender">Вы</div><div class="message-content">${userContent}</div>`,
+                'sent'
+            );
+        }
+
+        /* 2. — «ИИ печатает…» */
+        addMsg(
+            '<div class="message-sender">JangyrAI‑бот</div><div class="message-content"><em>ИИ печатает…</em></div>',
+            'received'
+        );
+
+        /* 3. — отправляем FormData */
+        const data = new FormData(form);            // message + file + csrf
+        fetch('', { method: 'POST', body: data })
+            .then(r => r.json())
+            .then(({ response }) => {
+                // убираем индикатор печати
+                list.lastElementChild.remove();
+
+                // выводим ответ ИИ
+                addMsg(
+                    `<div class="message-sender">JangyrAI‑бот</div><div class="message-content">${response}</div>`,
+                    'received'
+                );
+
+                // очищаем форму
+                textarea.value = '';
+                fileInput.value = '';
+            })
+            .catch(() => alert('Ошибка сети'));
+    });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.map(el => new bootstrap.Tooltip(el))
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput   = document.getElementById('file-upload');
+    const fileInfo    = document.getElementById('file-info');
+    const fileNameEl  = document.getElementById('file-name');
+    const removeFile  = document.getElementById('remove-file');
+    const textarea    = document.querySelector('.message-input');
+
+    // Показ / скрытие textarea
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            textarea.classList.add('d-none');
+            fileInfo.classList.remove('d-none');
+            fileNameEl.textContent = `Загружен файл: ${fileInput.files[0].name}`;
+        } else {
+            textarea.classList.remove('d-none');
+            fileInfo.classList.add('d-none');
+        }
+    });
+
+    // Удаление файла
+    removeFile.addEventListener('click', () => {
+        fileInput.value = '';
+        textarea.classList.remove('d-none');
+        fileInfo.classList.add('d-none');
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .errorlist {
+        list-style: none;
+        padding: 10px 15px;
+        margin-bottom: 1rem;
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+        color: #842029;
+        border-radius: 0.375rem;
+    }
+
+    form p {
+        margin-bottom: 1.25rem;
+    }
+
+    form label {
+        font-weight: 500;
+        color: var(--text-dark);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    form input {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        font-size: 1rem;
+        border: 1px solid var(--light-bg-2);
+        border-radius: 0.5rem;
+        background-color: #ffffff;
+    }
+
+    form input:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 0.15rem rgba(15, 23, 42, 0.15);
+    }
+</style>
+
+<div class="container d-flex justify-content-center align-items-center mt-5">
+    <div class="card-custom shadow p-4" style="max-width: 480px; width: 100%;">
+        <h2 class="text-center mb-4 fw-bold">Вход в систему</h2>
+        <hr style="border-top: 2px solid var(--light-bg-2);">
+
+        <form action="{% url 'login' %}" method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="d-grid mt-3">
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </div>
+        </form>
+
+        <div class="mt-4 text-center">
+            <a href="{% url 'password_reset' %}" class="text-muted text-decoration-none">Забыли пароль?</a><br>
+            <span class="text-muted">Нет аккаунта?</span>
+            <a href="{% url 'register' %}" class="text-decoration-none fw-semibold" style="color: var(--primary);">Зарегистрироваться</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

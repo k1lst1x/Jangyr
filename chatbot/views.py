@@ -154,6 +154,8 @@ def make_rich_summary(docs: list[Document], set_name: str, user_id: int) -> str:
         for d in picked
     ] or ["(текст не извлечён, но документ присутствует)"]
 
+    joined_parts = {'\n\n'.join(parts)}
+
     prompt = f"""
 Ты — эксперт по внутренним нормативным документам (ВНД) и НПА.
 Анализ файлов с метаданными пропускай.
@@ -168,7 +170,7 @@ def make_rich_summary(docs: list[Document], set_name: str, user_id: int) -> str:
 
 Набор: {set_name}
 ----------------------------------------------------
-{'\n\n'.join(parts)}
+{joined_parts}
 ----------------------------------------------------
 Формат ответа:
 ### Анализ
@@ -200,7 +202,7 @@ def chatbot(request):
             draft = Chat.objects.create(
                 user    = user,
                 message = user_message,
-                response= "⌛ AI thinking…",
+                response= "⌛ Запуск ИИ…",
             )
 
             # --- 2) длинные вычисления -------------------------------
@@ -238,7 +240,8 @@ def chatbot(request):
             return JsonResponse({"message": escape(user_message),
                                 "response": draft.response}, status=500)
 
-        return JsonResponse({"message": escape(user_message), "response": draft.response})
+        # return JsonResponse({"message": escape(user_message), "response": draft.response})
+        return JsonResponse({"message": escape(user_message), "response": draft.response, "set_name": set_name})
 
     return render(request, "home.html", {"chats": chats, "upload_form": upload_form})
 

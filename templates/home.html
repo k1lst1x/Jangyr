@@ -157,18 +157,31 @@
                     <i class="bi bi-paperclip"></i>
                 </label>
                 <input id="file-upload" type="file" name="file" class="d-none">
-        
+                
                 <!-- Текстовое поле -->
-                <textarea name="message" rows="1"
-                          class="form-control message-input"
-                          placeholder="Введите вопрос"></textarea>
-        
-                <!-- Кнопка отправки -->
-                <button type="submit" class="btn btn-primary btn-send">
+                <textarea
+                    class="form-control message-input"
+                    name="message"
+                    rows="1"
+                    placeholder="Введите вопрос"></textarea>
+                <button
+                    id="sendFileButton"
+                    class="btn btn-primary ms-2 rounded-3 d-none"
+                    type="submit">
+                    Отправить файл
+                </button>
+                <button
+                    id="recordingButton" 
+                    class="btn btn-primary mx-2">
+                    <i class="bi bi-mic-fill"></i>
+                </button>
+                <button
+                    id="sendButton"
+                    class="btn btn-primary btn-send"
+                    type="submit">
                     <i class="bi bi-send-fill"></i>
                 </button>
             </div>
-        
             <!-- Инфо о файле и сброс -->
             <div id="file-info" class="mt-2 d-none text-muted small">
                 <span id="file-name"></span>
@@ -177,7 +190,40 @@
         </form>                      
     </div>
 </div>
+<script>
+    const recordingButton = document.getElementById('recordingButton');
+    const sendButton = document.getElementById('sendButton');
+    const output = document.getElementById('output');
+    const messageInput = document.querySelector('.message-input');
+    const form = document.getElementById('chat-form');
 
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Ваш браузер не поддерживает функцию распознования голоса!');
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ru-RU'; // Русский язык
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recordingButton.addEventListener('click', () => {
+        recognition.start();
+        messageInput.placeholder = 'Говорите...';
+        sendButton.disabled = true;
+      });
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        messageInput.value = transcript;
+        sendButton.disabled = false;
+      };
+
+      recognition.onerror = (event) => {
+        alert(`Ошибка: ${event.error}`);
+      };
+    }
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const form      = document.getElementById('chat-form');
@@ -185,6 +231,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileInput = form.querySelector('input[type="file"]');
     const list      = document.querySelector('.messages-list');
     const box       = document.querySelector('.messages-box');   // ← контейнер
+    const sendFileButton = document.getElementById('sendFileButton');
+    const recordingButton = document.getElementById('recordingButton');
+    let fileContextName = '';
 
     // --- автоскролл при загрузке страницы --------------------------
     box.scrollTop = box.scrollHeight;
@@ -197,6 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
         list.appendChild(li);
         document.querySelector('.messages-box').scrollTop = list.scrollHeight;
     }
+
+    textarea.addEventListener('input', () => {
+        if (textarea.value.trim().length === 0) {
+            recordingButton.disabled = false;
+        } else {
+            recordingButton.disabled = true;
+        }
+    });
+      
 
     form.addEventListener('submit', e => {
         e.preventDefault();
@@ -215,17 +273,34 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         }
 
+        let botAction;
+        if (message) {
+            botAction = 'ИИ печатает…';
+        } else {
+            botAction = 'ИИ анализирует...';
+        }
+
         /* 2. — «ИИ печатает…» */
         addMsg(
-            '<div class="message-sender">JangyrAI‑бот</div><div class="message-content"><em>ИИ печатает…</em></div>',
+            `<div class="message-sender">JangyrAI‑бот</div><div class="message-content"><em>${botAction}</em></div>`,
             'received'
         );
 
         /* 3. — отправляем FormData */
-        const data = new FormData(form);            // message + file + csrf
+        const data = new FormData(form);       
+        
+        if (fileContextName) {
+            const message = data.get('message');
+            data.set('message', `вопрос по ${fileContextName}: ${message}`);
+        }
+
+        console.log('data message - ', data.get('message'));
+
         fetch('', { method: 'POST', body: data })
             .then(r => r.json())
-            .then(({ response }) => {
+            .then(({ response, set_name }) => {
+                fileContextName = set_name;
+
                 // убираем индикатор печати
                 list.lastElementChild.remove();
 
@@ -234,8 +309,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     `<div class="message-sender">JangyrAI‑бот</div><div class="message-content">${response}</div>`,
                     'received'
                 );
-
-                // очищаем форму
+                if (textarea.classList.contains('d-none')) {
+                    textarea.classList.remove('d-none');
+                    
+                    sendFileButton.classList.add('d-none');
+                    sendButton.classList.remove('d-none');
+                    recordingButton.classList.remove('d-none');
+                }
+            
                 textarea.value = '';
                 fileInput.value = '';
             })
@@ -256,11 +337,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileNameEl  = document.getElementById('file-name');
     const removeFile  = document.getElementById('remove-file');
     const textarea    = document.querySelector('.message-input');
+    const sendFileButton = document.getElementById('sendFileButton');
+    const recordingButton = document.getElementById('recordingButton');
+    const sendButton = document.getElementById('sendButton');
 
     // Показ / скрытие textarea
     fileInput.addEventListener('change', () => {
         if (fileInput.files.length > 0) {
             textarea.classList.add('d-none');
+            recordingButton.classList.add('d-none');
+            sendButton.classList.add('d-none');
+            sendFileButton.classList.remove('d-none');
+
             fileInfo.classList.remove('d-none');
             fileNameEl.textContent = `Загружен файл: ${fileInput.files[0].name}`;
         } else {
@@ -272,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Удаление файла
     removeFile.addEventListener('click', () => {
         fileInput.value = '';
+        fileContextName = '';
         textarea.classList.remove('d-none');
         fileInfo.classList.add('d-none');
     });
